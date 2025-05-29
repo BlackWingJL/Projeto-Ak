@@ -1,4 +1,5 @@
 import pyttsx3
+import pygame
 import os
 from datetime import datetime
 import random
@@ -20,6 +21,15 @@ os.makedirs(pasta_lembretes, exist_ok=True)
 pasta_alarmes = "alarmes"
 os.makedirs(pasta_alarmes, exist_ok=True)
 
+def tocar_musica(musica):
+    pygame.mixer.init()
+    pygame.mixer.music.load(musica)
+    pygame.mixer.music.play()
+
+    while pygame.mixer.music.get_busy():
+        pass  # Aguarda a música terminar de tocar
+
+    pygame.mixer.quit() 
 
 def assistente(pergunta):
     pergunta = pergunta.lower()
@@ -47,11 +57,45 @@ def verificar_alarmes():
             data_hora, texto = linha.strip().split("|")
             if data_hora == agora:
                 falar(f"🔔 Alarme: {texto}")
+                tocar_musica("alarme.mp3")
+            elif validar_data_hora(data_hora) and datetime.strptime(data_hora, "%d/%m/%Y %H:%M") > datetime.now():
+                linhas_restantes.append(linha)
             else:
                 linhas_restantes.append(linha)
     # Atualiza o arquivo para manter só os alarmes futuros
     with open(caminho, "w") as arquivo:
         arquivo.writelines(linhas_restantes)
+
+def apagar_alarme(texto_ou_data=None):
+    caminho = os.path.join(pasta_alarmes, "alarmes.txt")
+    if not os.path.exists(caminho):
+        return "Nenhum alarme encontrado."
+
+    if texto_ou_data is None:
+        os.remove(caminho)
+        return "Todos os alarmes foram apagados."
+    
+    linhas_restantes = []
+    alarme_apagado = False
+    if not validar_data_hora(texto_ou_data):
+        # Se não for uma data válida, assume que é um texto
+        texto_ou_data = texto_ou_data.strip()
+
+    with open(caminho, "r") as arquivo:
+        linhas = arquivo.readlines()
+        for linha in linhas:
+            data_hora, texto = linha.strip().split("|")
+            if texto_ou_data in data_hora or texto_ou_data in texto:
+                alarme_apagado = True
+            else:
+                linhas_restantes.append(linha)
+
+    with open(caminho, "w") as arquivo:
+        arquivo.writelines(linhas_restantes)
+        
+    if alarme_apagado:
+        return f"Alarme '{texto_ou_data}' apagado com sucesso!"
+    return f"Nenhum alarme correspondente a '{texto_ou_data}' foi encontrado."
 
 def salvar_lembrete(categoria, lembrete):
     caminho = os.path.join(pasta_lembretes, f"{categoria}.txt")
@@ -136,6 +180,13 @@ while True:
                 resposta = salvar_alarme(texto, data_hora)
             else:
                 resposta = "Formato de data e hora inválido. Tente novamente."
+        elif "alarme" in pergunta_usuario and "apagar" in pergunta_usuario:
+            apagar_todos = input("Deseja apagar todos os alarmes? (sim/não): ").strip().lower()
+            if apagar_todos == "sim":
+                resposta = apagar_alarme()  # Chama a função sem argumentos para apagar todos
+            else:
+                texto_ou_data = input("Digite o texto ou a data/hora do alarme que deseja apagar: ").strip()
+                resposta = apagar_alarme(texto_ou_data)
         else:
             resposta = Zain_rpg(pergunta_usuario)
 
