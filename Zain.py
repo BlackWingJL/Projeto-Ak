@@ -22,6 +22,7 @@ pasta_alarmes = "alarmes"
 os.makedirs(pasta_alarmes, exist_ok=True)
 
 def tocar_musica(musica):
+    if not os.path.isfile(musica): return
     pygame.mixer.init()
     pygame.mixer.music.load(musica)
     pygame.mixer.music.play()
