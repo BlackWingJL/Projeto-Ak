@@ -1,1 +1,5 @@
-/lembretes.txt
+# Ignorar diretórios criados pela aplicação
+alarmes/
+lembretes_categoria/
+musicas/
+pygametest/
