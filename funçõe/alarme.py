@@ -1,9 +1,8 @@
 from funçõe.config import pasta_alarmes
-from funçõe.utils import falar
+from funçõe.utils import falar, validar_data_hora,datetime
 from funçõe.musica import tocar_musica
 import logging
 import os
-import datetime
 import time
 
 def verificar_alarmes(som_alarme):

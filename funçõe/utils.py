@@ -1,6 +1,7 @@
 import pyttsx3
 import logging
-import datetime
+from datetime import datetime
+import speech_recognition as sr
 
 
 
@@ -24,6 +25,23 @@ def falar(texto):
     except Exception as e:
         logging.error(f"Erro ao falar: {e}")
     print(f"Zain: {texto}")
+
+def reconhecer_fala():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        r.adjust_for_ambient_noise(source)
+        print("Zain: Estou ouvindo...")
+        audio = r.listen(source)
+    try:
+        texto = r.recognize_google(audio, language='pt-BR')
+        print(f"Você: {texto}")
+        return texto.lower()
+    except sr.UnknownValueError:
+        falar("Desculpe, não consegui entender o que você disse.")
+    except sr.RequestError as e:
+        falar(f"Erro ao reconhecer a fala: {e}")
+        logging.error(f"Erro ao reconhecer a fala: {e}")
+        return None
 
 def validar_data_hora(data_hora):
     try:
