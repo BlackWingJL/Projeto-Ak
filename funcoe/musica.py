@@ -1,10 +1,10 @@
-from funçõe.config import pasta_musica
+from funcoe.config import pasta_musica
 import os
 import logging
 import pygame
 import tkinter as tk
 from tkinter import filedialog
-from funçõe.utils import falar
+from funcoe.utils import falar
 
 def tocar_musica(nome_musica):
     """Verifica se o arquivo de música existe na pasta de músicas e tenta tocá-lo."""

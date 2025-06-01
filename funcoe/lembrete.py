@@ -1,8 +1,8 @@
 import os
 import datetime
-from funçõe.config import pasta_lembretes
-from funçõe.utils import validar_data_hora
-from funçõe.alarme import salvar_alarme
+from funcoe.config import pasta_lembretes
+from funcoe.utils import validar_data_hora
+from funcoe.alarme import salvar_alarme
 
 os.path.join(pasta_lembretes, "lembretes.txt")
 # Funções relacionadas a lembretes

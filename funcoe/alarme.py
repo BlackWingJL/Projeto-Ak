@@ -1,6 +1,6 @@
-from funçõe.config import pasta_alarmes
-from funçõe.utils import falar, validar_data_hora,datetime
-from funçõe.musica import tocar_musica
+from funcoe.config import pasta_alarmes
+from funcoe.utils import falar, validar_data_hora,datetime
+from funcoe.musica import tocar_musica
 import logging
 import os
 import time

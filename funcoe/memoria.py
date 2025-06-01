@@ -1,6 +1,6 @@
 import os 
 import json
-from funçõe.config import  arquivo_memoria
+from funcoe.config import  arquivo_memoria
 
 
 def carregar_memoria():

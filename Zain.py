@@ -1,24 +1,16 @@
-from funçõe.config import pasta_alarmes, pasta_musica, pasta_lembretes
-from funçõe.lembrete import criar_lembrete, ler_lembretes, listar_categorias
-from funçõe.memoria import salvar_memoria, carregar_memoria
-from funçõe.alarme import verificar_alarmes, salvar_alarme, apagar_alarme, verificar_alarmes_em_thread
-from funçõe.musica import tocar_musica, alterar_som_alarme, salvar_musica_por_upload
-from funçõe.utils import validar_data_hora, falar, reconhecer_fala
-from funçõe.aletar_discord import AlertaDiscord
-import random
+from funcoe.config import pasta_alarmes, pasta_musica, pasta_lembretes
+from funcoe.lembrete import criar_lembrete, ler_lembretes, listar_categorias
+from funcoe.memoria import salvar_memoria, carregar_memoria
+from funcoe.alarme import verificar_alarmes, salvar_alarme, apagar_alarme, verificar_alarmes_em_thread
+from funcoe.musica import tocar_musica, alterar_som_alarme, salvar_musica_por_upload
+from funcoe.utils import validar_data_hora, falar, reconhecer_fala
+from funcoe.aletar_discord import AlertaDiscord
+from funcoe.gerador_nome import gerar_nome
+from funcoe.rpg import Zain_rpg
 import threading 
+import random
 
-webhook_url = "https://discord.com/api/webhooks/1378226249813594192/3mbWIZIPqcilavihlA4w2Z29h4NKDMc-68620bZFk9DE2c25LoL75SltivQ_nKIso3EX"  # Substitua pelo seu webhook do Discord
-
-def Zain_rpg(pergunta):
-    if "dado" in pergunta:
-        resultado = random.randint(1, 20)
-        return f"Você rolou um d20 e tirou {resultado}!"
-    elif "espada longa" in pergunta:
-        return "Uma espada longa causa 1d8 de dano cortante."
-    elif "piada" in pergunta:
-        return "Por que o mago foi ao terapeuta? Porque ele estava conjurando muitos problemas!"
-    return "Ainda não aprendi a responder isso. Tente outra pergunta."
+webhook_url = "https://discord.com/api/webhooks/1378226249813594192/3mbWIZIPqcilavihlA4w2Z29h4NKDMc-68620bZFk9DE2c25LoL75SltivQ_nKIso3EX"
 
 def log_terminal(mensagem):
     """Envia mensagens para o terminal e para o Discord."""
@@ -30,19 +22,31 @@ def loop_principal():
     som_alarme = "som_alarme"  # Som padrão do alarme
     memoria = carregar_memoria()
 
+    # Pergunta ao usuário o modo de interação
+    falar("Você gostaria de interagir por texto ou por voz? Diga 'texto' ou 'voz'.")
+    modo_interacao = reconhecer_fala().strip().lower()  # Captura a escolha por voz
+    if modo_interacao not in ["texto", "voz"]:
+        falar("Não entendi sua escolha. Vou usar o modo de voz por padrão.")
+        modo_interacao = "texto"  # Define o modo de interação padrão como texto
+
     # Inicia a thread para verificar alarmes
     thread_verificar_alarmes = threading.Thread(target=verificar_alarmes_em_thread, args=(som_alarme,), daemon=True)
     thread_verificar_alarmes.start()
 
     while True:
-        pergunta_usuario = reconhecer_fala()  # Usa a função de reconhecimento de fala
-        if not pergunta_usuario:
-            continue
-        AlertaDiscord(f"Usuário: {pergunta_usuario}", webhook_url)  # Envia a entrada do usuário para o Discord
+        # Captura a entrada do usuário com base no modo de interação
+        if modo_interacao == "texto":
+            pergunta_usuario = input("Você: ").strip().lower()
+        else:  # Modo de voz
+            pergunta_usuario = reconhecer_fala()
+            if not pergunta_usuario:
+                continue
+
+        #AlertaDiscord(f"Usuário: {pergunta_usuario}", webhook_url)  # Envia a entrada do usuário para o Discord
 
         if pergunta_usuario in ["sair", "exit", "parar"]:
             falar("Até mais!")
-            AlertaDiscord("Zain: Até mais!", webhook_url)  # Envia a mensagem de saída para o Discord
+            #AlertaDiscord("Zain: Até mais!", webhook_url)  # Envia a mensagem de saída para o Discord
             break
 
         elif "alterar som do alarme" in pergunta_usuario:
@@ -55,20 +59,20 @@ def loop_principal():
 
         elif "criar alarme" in pergunta_usuario:
             falar("Diga o texto do alarme.")
-            texto_alarme = reconhecer_fala()
+            texto_alarme = reconhecer_fala() if modo_interacao == "voz" else input("Digite o texto do alarme: ")
             if not texto_alarme:
                 falar("Não consegui entender o texto do alarme. Tente novamente.")
                 continue
 
-            falar("Diga a data e hora .")
-            data_hora = reconhecer_fala()
+            falar("Diga a data e hora do alarme no formato dd/mm/yyyy hh:mm.")
+            data_hora = reconhecer_fala() if modo_interacao == "voz" else input("Digite a data e hora do alarme (dd/mm/yyyy hh:mm): ")
             if not data_hora or not validar_data_hora(data_hora):
                 falar("Data e hora inválidas. Tente novamente.")
                 continue
 
             resposta = salvar_alarme(texto_alarme, data_hora)
             falar(resposta)
-            AlertaDiscord(f"Zain: {resposta}", webhook_url)
+            #AlertaDiscord(f"Zain: {resposta}", webhook_url)
 
         elif "apagar alarme" in pergunta_usuario:
             resposta = apagar_alarme()
@@ -76,13 +80,13 @@ def loop_principal():
 
         elif "salvar lembrete" in pergunta_usuario:
             falar("Diga a categoria do lembrete.")
-            categoria = reconhecer_fala()
+            categoria = reconhecer_fala() if modo_interacao == "voz" else input("Digite a categoria do lembrete: ")
             if not categoria:
                 falar("Não consegui entender a categoria. Tente novamente.")
                 continue
 
             falar("Diga o lembrete.")
-            lembrete = reconhecer_fala()
+            lembrete = reconhecer_fala() if modo_interacao == "voz" else input("Digite o lembrete: ")
             if not lembrete:
                 falar("Não consegui entender o lembrete. Tente novamente.")
                 continue
@@ -92,7 +96,7 @@ def loop_principal():
 
         elif "ler lembretes" in pergunta_usuario:
             falar("Diga a categoria que você deseja ler.")
-            categoria = reconhecer_fala()
+            categoria = reconhecer_fala() if modo_interacao == "voz" else input("Digite a categoria que você deseja ler: ")
             if not categoria:
                 falar("Não consegui entender a categoria. Tente novamente.")
                 continue
@@ -105,13 +109,13 @@ def loop_principal():
             falar(resposta)
 
         elif "rpg" in pergunta_usuario:
-            resposta = Zain_rpg(pergunta_usuario)
+            resposta = Zain_rpg(pergunta_usuario, modo_interacao)
             falar(resposta)
 
         elif "lembrar" in pergunta_usuario:
             info = pergunta_usuario.replace("lembrar", "").strip()
             falar("Diga a chave para lembrar.")
-            chave = reconhecer_fala()
+            chave = reconhecer_fala() if modo_interacao == "voz" else input("Digite a chave para lembrar: ")
             if not chave:
                 falar("Não consegui entender a chave. Tente novamente.")
                 continue
@@ -122,7 +126,7 @@ def loop_principal():
 
         elif "o que você lembra" in pergunta_usuario:
             falar("Diga a chave que você quer saber.")
-            chave = reconhecer_fala()
+            chave = reconhecer_fala() if modo_interacao == "voz" else input("Digite a chave que você quer saber: ")
             if not chave:
                 falar("Não consegui entender a chave. Tente novamente.")
                 continue
@@ -134,7 +138,7 @@ def loop_principal():
 
         elif "esqueca" in pergunta_usuario:
             falar("Diga a chave que você quer esquecer.")
-            chave = reconhecer_fala()
+            chave = reconhecer_fala() if modo_interacao == "voz" else input("Digite a chave que você quer esquecer: ")
             if not chave:
                 falar("Não consegui entender a chave. Tente novamente.")
                 continue
@@ -145,6 +149,11 @@ def loop_principal():
                 falar(f"Apagei o registro da chave '{chave}'.")
             else:
                 falar(f"Não lembro de nada com a chave '{chave}' para esquecer.")
+
+        elif "gerar nome" in pergunta_usuario:
+            nome_gerado = gerar_nome()
+            falar(f"Nome gerado: {nome_gerado}")
+            log_terminal(f"Nome gerado: {nome_gerado}")
 
         else:
             falar("Desculpe, não entendi sua pergunta. Tente novamente.")
